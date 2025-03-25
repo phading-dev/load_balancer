@@ -1,0 +1,130 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: phading-certificate
+spec:
+  domains:
+    - dev.phading.org
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: phading-ingress-external
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "phading-cluster-external-ip"
+    networking.gke.io/managed-certificates: "phading-certificate"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /ct/w
+        pathType: Prefix
+        backend:
+          service:
+            name: comment-service
+            port:
+              number: 80
+      - path: /c/w
+        pathType: Prefix
+        backend:
+          service:
+            name: commerce-service
+            port:
+              number: 80
+      - path: /m/w
+        pathType: Prefix
+        backend:
+          service:
+            name: meter-service
+            port:
+              number: 80
+      - path: /a/w
+        pathType: Prefix
+        backend:
+          service:
+            name: play-activity-service
+            port:
+              number: 80
+      - path: /p/w
+        pathType: Prefix
+        backend:
+          service:
+            name: product-service
+            port:
+              number: 8080
+      - path: /u/w
+        pathType: Prefix
+        backend:
+          service:
+            name: user-service
+            port:
+              number: 80
+      - path: /us/w
+        pathType: Prefix
+        backend:
+          service:
+            name: user-session-service
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: phading-ingress-internal
+  annotations:
+    kubernetes.io/ingress.class: "gce-internal"
+    kubernetes.io/ingress.regional-static-ip-name: "phading-cluster-internal-ip"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /c/n
+        pathType: Prefix
+        backend:
+          service:
+            name: commerce-service
+            port:
+              number: 80
+      - path: /m/n
+        pathType: Prefix
+        backend:
+          service:
+            name: meter-service
+            port:
+              number: 80
+      - path: /a/n
+        pathType: Prefix
+        backend:
+          service:
+            name: play-activity-service
+            port:
+              number: 80
+      - path: /p/n
+        pathType: Prefix
+        backend:
+          service:
+            name: product-service
+            port:
+              number: 8080
+      - path: /u/n
+        pathType: Prefix
+        backend:
+          service:
+            name: user-service
+            port:
+              number: 80
+      - path: /us/n
+        pathType: Prefix
+        backend:
+          service:
+            name: user-session-service
+            port:
+              number: 80
+      - path: /v/n
+        pathType: Prefix
+        backend:
+          service:
+            name: video-service
+            port:
+              number: 80
