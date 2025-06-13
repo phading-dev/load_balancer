@@ -89,6 +89,20 @@ function generateIngressPath(entry: [string, [string, number]]) {
 }
 
 export function generate(env: string) {
+  let turnupTemplate = `#!/bin/bash
+# GCP auth
+gcloud auth application-default login
+gcloud config set project ${ENV_VARS.projectId}
+
+# Create the builder service account
+gcloud iam service-accounts create ${ENV_VARS.builderAccount}
+
+# Grant permissions to the builder service account
+gcloud projects add-iam-policy-binding ${ENV_VARS.projectId} --member="serviceAccount:${ENV_VARS.builderAccount}@${ENV_VARS.projectId}.iam.gserviceaccount.com" --role='roles/cloudbuild.builds.builder' --condition=None
+gcloud projects add-iam-policy-binding ${ENV_VARS.projectId} --member="serviceAccount:${ENV_VARS.builderAccount}@${ENV_VARS.projectId}.iam.gserviceaccount.com" --role='roles/container.developer' --condition=None
+`;
+  writeFileSync(`${env}/turnup.sh`, turnupTemplate);
+
   let cloudbuildTemplate = `steps:
 - name: 'gcr.io/cloud-builders/kubectl'
   args: ['apply', '-f', '${env}/ingress.yaml']
