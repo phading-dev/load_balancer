@@ -1,7 +1,7 @@
 import { ENV_VARS } from "./env_vars";
 import { COMMENT_WEB_SERVICE } from "@phading/comment_service_interface/service";
 import {
-  K8S_SERVICE_NAME as COMMET_SERVICE_NAME,
+  K8S_SERVICE_NAME as COMMENT_SERVICE_NAME,
   K8S_SERVICE_PORT as COMMENT_SERVICE_PORT,
 } from "@phading/comment_service_interface/service_const";
 import {
@@ -57,6 +57,10 @@ import {
   K8S_SERVICE_NAME as VIDEO_SERVICE_NAME,
   K8S_SERVICE_PORT as VIDEO_SERVICE_PORT,
 } from "@phading/video_service_interface/service_const";
+import {
+  K8S_SERVICE_NAME as WEB_UI_SERVICE_NAME,
+  K8S_SERVICE_PORT as WEB_UI_SERVICE_NODE,
+} from "@phading/web_interface/service_const";
 import { writeFileSync } from "fs";
 
 function addService(
@@ -98,10 +102,11 @@ options:
 
   let webServices = new Map<string, [string, number]>(); // [service path, [service name, service port]]
   let nodeServices = new Map<string, [string, number]>(); // [service path, [service name, service port]]
+
   addService(
     webServices,
     COMMENT_WEB_SERVICE.path,
-    COMMET_SERVICE_NAME,
+    COMMENT_SERVICE_NAME,
     COMMENT_SERVICE_PORT,
   );
 
@@ -189,6 +194,10 @@ options:
     VIDEO_SERVICE_NAME,
     VIDEO_SERVICE_PORT,
   );
+
+  // Assumes the web UI is served at the root path "/".
+  addService(webServices, "/", WEB_UI_SERVICE_NAME, WEB_UI_SERVICE_NODE);
+
   let ingressTemplate = `apiVersion: networking.gke.io/v1
 kind: ManagedCertificate
 metadata:
