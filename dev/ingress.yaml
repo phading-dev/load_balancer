@@ -18,49 +18,49 @@ spec:
   rules:
   - http:
       paths:
-      - path: /ct/w
+      - path: /ctw
         pathType: Prefix
         backend:
           service:
             name: comment-service
             port:
               number: 80
-      - path: /c/w
+      - path: /cw
         pathType: Prefix
         backend:
           service:
             name: commerce-service
             port:
               number: 80
-      - path: /m/w
+      - path: /mw
         pathType: Prefix
         backend:
           service:
             name: meter-service
             port:
               number: 80
-      - path: /a/w
+      - path: /aw
         pathType: Prefix
         backend:
           service:
             name: play-activity-service
             port:
               number: 80
-      - path: /p/w
+      - path: /pw
         pathType: Prefix
         backend:
           service:
             name: product-service
             port:
               number: 8080
-      - path: /u/w
+      - path: /uw
         pathType: Prefix
         backend:
           service:
             name: user-service
             port:
               number: 80
-      - path: /us/w
+      - path: /usw
         pathType: Prefix
         backend:
           service:
@@ -86,49 +86,49 @@ spec:
   rules:
   - http:
       paths:
-      - path: /c/n
+      - path: /cn
         pathType: Prefix
         backend:
           service:
             name: commerce-service
             port:
               number: 80
-      - path: /m/n
+      - path: /mn
         pathType: Prefix
         backend:
           service:
             name: meter-service
             port:
               number: 80
-      - path: /a/n
+      - path: /an
         pathType: Prefix
         backend:
           service:
             name: play-activity-service
             port:
               number: 80
-      - path: /p/n
+      - path: /pn
         pathType: Prefix
         backend:
           service:
             name: product-service
             port:
               number: 8080
-      - path: /u/n
+      - path: /un
         pathType: Prefix
         backend:
           service:
             name: user-service
             port:
               number: 80
-      - path: /us/n
+      - path: /usn
         pathType: Prefix
         backend:
           service:
             name: user-session-service
             port:
               number: 80
-      - path: /v/n
+      - path: /vn
         pathType: Prefix
         backend:
           service:
