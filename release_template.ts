@@ -220,6 +220,14 @@ spec:
   domains:
     - ${ENV_VARS.externalDomain}
 ---
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: phading-load-balancer-config
+spec:
+  redirectToHttps:
+    enabled: true
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -228,6 +236,7 @@ metadata:
     kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: "${ENV_VARS.clusterExternalIpName}"
     networking.gke.io/managed-certificates: "phading-certificate"
+    networking.gke.io/v1beta1.FrontendConfig: "phading-load-balancer-config"
 spec:
   rules:
   - http:
