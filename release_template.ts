@@ -259,3 +259,6 @@ spec:
 
 import "./dev/env";
 generate("dev");
+
+import "./prod/env";
+generate("prod");
