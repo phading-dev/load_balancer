@@ -5,6 +5,7 @@ metadata:
 spec:
   domains:
     - www.secount.com
+    - secount.com
 ---
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig

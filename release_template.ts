@@ -218,7 +218,7 @@ metadata:
   name: phading-certificate
 spec:
   domains:
-    - ${ENV_VARS.externalDomain}
+    - ${ENV_VARS.externalDomain}${ENV_VARS.externalSynonymDomains ? ENV_VARS.externalSynonymDomains.map(domain => `\n    - ${domain}`).join("") : ""}
 ---
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
