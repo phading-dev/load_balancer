@@ -109,7 +109,7 @@ spec:
         value: /pn
     backendRefs:
     - name: product-service
-      port: 8080
+      port: 80
   - matches:
     - path:
         type: PathPrefix
@@ -177,7 +177,7 @@ spec:
         value: /pw
     backendRefs:
     - name: product-service
-      port: 8080
+      port: 80
   - matches:
     - path:
         type: PathPrefix
