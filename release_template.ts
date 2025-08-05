@@ -77,15 +77,15 @@ function addService(
   webServices.set(servicePath, [serviceName, servicePort]);
 }
 
-function generateIngressPath(entry: [string, [string, number]]) {
+function generateHttpRoutePath(entry: [string, [string, number]]) {
   return `
-      - path: ${entry[0]}
-        pathType: Prefix
-        backend:
-          service:
-            name: ${entry[1][0]}
-            port:
-              number: ${entry[1][1]}`;
+  - matches:
+    - path:
+        type: PathPrefix
+        value: ${entry[0]}
+    backendRefs:
+    - name: ${entry[1][0]}
+      port: ${entry[1][1]}`;
 }
 
 export function generate(env: string) {
@@ -105,7 +105,7 @@ gcloud projects add-iam-policy-binding ${ENV_VARS.projectId} --member="serviceAc
 
   let cloudbuildTemplate = `steps:
 - name: 'gcr.io/cloud-builders/kubectl'
-  args: ['apply', '-f', '${env}/ingress.yaml']
+  args: ['apply', '-f', '${env}/gateway.yaml']
   env:
     - 'CLOUDSDK_CONTAINER_CLUSTER=${ENV_VARS.clusterName}'
     - 'CLOUDSDK_COMPUTE_REGION=${ENV_VARS.clusterRegion}'
@@ -212,49 +212,103 @@ options:
   // Assumes the web UI is served at the root path "/".
   addService(webServices, "/", WEB_UI_SERVICE_NAME, WEB_UI_SERVICE_NODE);
 
-  let ingressTemplate = `apiVersion: networking.gke.io/v1
-kind: ManagedCertificate
+  let gatewayTemplate = `apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
 metadata:
-  name: phading-certificate
+  name: ${ENV_VARS.internalGatewayName}
 spec:
-  domains:
-    - ${ENV_VARS.externalDomain}${ENV_VARS.externalSynonymDomains ? ENV_VARS.externalSynonymDomains.map(domain => `\n    - ${domain}`).join("") : ""}
+  gatewayClassName: gke-l7-rilb
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Same
+  addresses:
+  - type: NamedAddress
+    value: ${ENV_VARS.clusterInternalIpName}
 ---
-apiVersion: networking.gke.io/v1beta1
-kind: FrontendConfig
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
 metadata:
-  name: phading-load-balancer-config
+  name: ${ENV_VARS.externalGatewayName}
 spec:
-  redirectToHttps:
-    enabled: true
+  gatewayClassName: gke-l7-global-external-managed
+  listeners:
+  - name: https
+    protocol: HTTPS
+    port: 443
+    tls:
+      mode: Terminate
+      options:
+        networking.gke.io/pre-shared-certs: ${ENV_VARS.externalSslCertificateName}
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Same
+  addresses:
+  - type: NamedAddress
+    value: ${ENV_VARS.clusterExternalIpName}
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: phading-ingress-external
-  annotations:
-    kubernetes.io/ingress.class: "gce"
-    kubernetes.io/ingress.global-static-ip-name: "${ENV_VARS.clusterExternalIpName}"
-    networking.gke.io/managed-certificates: "phading-certificate"
-    networking.gke.io/v1beta1.FrontendConfig: "phading-load-balancer-config"
+  name: ${ENV_VARS.externalGatewayName}-https-redirect
 spec:
+  parentRefs:
+  - name: ${ENV_VARS.externalGatewayName}
+    sectionName: http
+  hostnames:
+  - ${ENV_VARS.externalDomain}
   rules:
-  - http:
-      paths:${Array.from(webServices).map(generateIngressPath).join("")}
+  - filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: phading-ingress-internal
-  annotations:
-    kubernetes.io/ingress.class: "gce-internal"
-    kubernetes.io/ingress.regional-static-ip-name: "${ENV_VARS.clusterInternalIpName}"
+  name: ${ENV_VARS.externalGatewayName}-domain-redirect
 spec:
+  parentRefs:
+  - name: ${ENV_VARS.externalGatewayName}
+  hostnames:${ENV_VARS.externalSynonymDomains.map((domain) => `\n  - ${domain}`).join("")}
   rules:
-  - http:
-      paths:${Array.from(nodeServices).map(generateIngressPath).join("")}
+  - filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        hostname: ${ENV_VARS.externalDomain}
+        statusCode: 301
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: ${ENV_VARS.internalGatewayName}-route
+spec:
+  parentRefs:
+  - name: ${ENV_VARS.internalGatewayName}
+    sectionName: http
+  rules:${Array.from(nodeServices).map(generateHttpRoutePath).join("")}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: ${ENV_VARS.externalGatewayName}-route
+spec:
+  parentRefs:
+  - name: ${ENV_VARS.externalGatewayName}
+    sectionName: https
+  hostnames:
+  - ${ENV_VARS.externalDomain}
+  rules:${Array.from(webServices).map(generateHttpRoutePath).join("")}
 `;
-  writeFileSync(`${env}/ingress.yaml`, ingressTemplate);
+  writeFileSync(`${env}/gateway.yaml`, gatewayTemplate);
 }
 
 import "./dev/env";

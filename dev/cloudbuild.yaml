@@ -1,6 +1,6 @@
 steps:
 - name: 'gcr.io/cloud-builders/kubectl'
-  args: ['apply', '-f', 'dev/ingress.yaml']
+  args: ['apply', '-f', 'dev/gateway.yaml']
   env:
     - 'CLOUDSDK_CONTAINER_CLUSTER=phading-cluster'
     - 'CLOUDSDK_COMPUTE_REGION=us-central1'
