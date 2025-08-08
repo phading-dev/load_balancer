@@ -65,6 +65,8 @@ spec:
   - name: phading-gateway-external
   hostnames:
   - secount.com
+  - secounts.com
+  - www.secounts.com
   rules:
   - filters:
     - type: RequestRedirect
